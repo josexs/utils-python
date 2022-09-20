@@ -1,18 +1,20 @@
 import requests
 import json
+import pandas as pd
 
-nameFile = "race.json"
-incidences = 1
+formatData="json" # json / csv
+nameFile = "race"
+incidents = 1
 cameras = 1
 radars = 1
 oilStations = 1
-backPoints = 1
+blackPoints = 1
 parkings = 1
 
 url = "https://mapas.race.es/WebServices/srvRace.asmx/ObtenerDatos?pstrIncidencias=" + \
-    str(incidences)+"&pstrCamaras="+str(cameras)+"&pstrRadares="+str(radars) + \
+    str(incidents)+"&pstrCamaras="+str(cameras)+"&pstrRadares="+str(radars) + \
     "&pstrGasolineras="+str(oilStations)+"&pstrPuntosNegros=" + \
-    str(backPoints)+"&pstrParking="+str(parkings)
+    str(blackPoints)+"&pstrParking="+str(parkings)
 
 headers = {
     "authority": "infocar.dgt.es",
@@ -28,7 +30,7 @@ textOk = splitText[1].split("</string>")[0]
 jsonRequest = json.loads(textOk)
 
 items = {}
-incidencesItems = []
+incidentsItems = []
 camerasItems = []
 radarsItems = []
 oilStationsItems = []
@@ -37,11 +39,11 @@ parkingsItems = []
 
 
 def get_object(type, item, id=None, image=None):
-    if type == "incidences":
+    if type == "incidents":
         return {
+            "id": str(id),
             "lat": str(item["Latitud"]),
             "lng": str(item["Longitud"]),
-            "id": str(id),
             "type": str(item["Tipo"]),
             "date": item["Fecha"],
             "reason": item["Causa"],
@@ -53,33 +55,33 @@ def get_object(type, item, id=None, image=None):
 
     if type == "cameras":
         return {
+            "id": str(item["Id"]),
             "lat": str(item["Latitud"]),
             "lng": str(item["Longitud"]),
-            "id": item["Id"],
             "image": image
         }
 
     if type == "radars" or type == "oilStations" or type == "blackPoints" or type == "parkings":
         return {
+            "id": str(item["Id"]),
             "lat": str(item["Latitud"]),
             "lng": str(item["Longitud"]),
-            "id": str(item["Id"]),
         }
 
 
-if incidences == 1:
+if incidents == 1:
     i = 1
     for itemIncidence in jsonRequest["Incidencias"]:
-        obj = get_object('incidences', itemIncidence, str(i))
-        incidencesItems.append(obj)
+        obj = get_object('incidents', itemIncidence, str(i))
+        incidentsItems.append(obj)
         i += 1
-    items["incidents"] = incidencesItems
+    items["incidents"] = incidentsItems
 
 if cameras == 1:
-    for itemRadars in jsonRequest["Camaras"]:
+    for itemCameras in jsonRequest["Camaras"]:
         image = "http://infocar.dgt.es/etraffic/data/camaras/" + \
-            str(itemRadars['Id'])+".jpg"
-        obj = get_object('camera', itemRadars, "", image)
+            str(itemCameras['Id'])+".jpg"
+        obj = get_object('cameras', itemCameras, "", image)
         camerasItems.append(obj)
     items["cameras"] = camerasItems
 
@@ -90,12 +92,12 @@ if radars == 1:
     items["radars"] = radarsItems
 
 if oilStations == 1:
-    for ItemsOilStation in jsonRequest["Radares"]:
+    for ItemsOilStation in jsonRequest["Gasolineras"]:
         obj = get_object('oilStations', ItemsOilStation)
         oilStationsItems.append(obj)
     items["oilStations"] = oilStationsItems
 
-if backPoints == 1:
+if blackPoints == 1:
     for itemBlackPoint in jsonRequest["PuntosNegros"]:
         obj = get_object('blackPoints', itemBlackPoint)
         blackPointsItems.append(obj)
@@ -107,8 +109,23 @@ if parkings == 1:
         parkingsItems.append(obj)
     items["parkings"] = parkingsItems
 
-f = open(nameFile, "w")
-itemsDumps = json.dumps(items, indent=2)
-f.write(itemsDumps)
+if formatData == "json":
+    f = open(nameFile + '.' + formatData, "w")
+    itemsDumps = json.dumps(items, indent=2)
+    f.write(itemsDumps)
+elif formatData == "csv":
+    incidentsDF = pd.DataFrame(items["incidents"])
+    camerasDF = pd.DataFrame(items["cameras"])
+    radarsDF = pd.DataFrame(items["radars"])
+    oilStationsDF = pd.DataFrame(items["oilStations"])
+    blackPointsDF = pd.DataFrame(items["blackPoints"])
+    parkingsDF = pd.DataFrame(items["parkings"])
 
-print('✅ JSON generated')
+    incidentsDF.to_csv(nameFile + "_incidents." + formatData, index=False)
+    camerasDF.to_csv(nameFile + "_cameras." + formatData, index=False)
+    radarsDF.to_csv(nameFile + "_radars." + formatData, index=False)
+    oilStationsDF.to_csv(nameFile + "_oilStations." + formatData)
+    blackPointsDF.to_csv(nameFile + "_blackPoints." + formatData, index=False)
+    parkingsDF.to_csv(nameFile + "_parkings." + formatData, index=False)
+
+print('✅ '+ formatData +' file/s generated')
