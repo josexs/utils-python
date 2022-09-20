@@ -25,9 +25,9 @@ headers = {
 response = requests.get(url, headers=headers)
 initialText = response.text
 splitText = response.text.split('<string xmlns="http://tempuri.org/">')
-textOk = splitText[1].split("</string>")[0]
+jsonToLoad = splitText[1].split("</string>")[0]
 
-jsonRequest = json.loads(textOk)
+jsonRequest = json.loads(jsonToLoad)
 
 items = {}
 incidentsItems = []
