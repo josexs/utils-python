@@ -2,7 +2,7 @@ import requests
 import json
 import pandas as pd
 
-formatData="json" # json / csv
+formatData = "jsons"  # json / csv
 nameFile = "race"
 incidents = 1
 cameras = 1
@@ -109,10 +109,25 @@ if parkings == 1:
         parkingsItems.append(obj)
     items["parkings"] = parkingsItems
 
+
+def json_to_files(type):
+    f = open(nameFile + '_' + type + '.json', "w")
+    items_dump = json.dumps(items[type], indent=2)
+    f.write(items_dump)
+
+
 if formatData == "json":
     f = open(nameFile + '.' + formatData, "w")
     itemsDumps = json.dumps(items, indent=2)
     f.write(itemsDumps)
+elif formatData == "jsons":
+    json_to_files("incidents")
+    json_to_files("cameras")
+    json_to_files("radars")
+    json_to_files("oilStations")
+    json_to_files("blackPoints")
+    json_to_files("parkings")
+
 elif formatData == "csv":
     incidentsDF = pd.DataFrame(items["incidents"])
     camerasDF = pd.DataFrame(items["cameras"])
@@ -120,12 +135,11 @@ elif formatData == "csv":
     oilStationsDF = pd.DataFrame(items["oilStations"])
     blackPointsDF = pd.DataFrame(items["blackPoints"])
     parkingsDF = pd.DataFrame(items["parkings"])
-
     incidentsDF.to_csv(nameFile + "_incidents." + formatData, index=False)
     camerasDF.to_csv(nameFile + "_cameras." + formatData, index=False)
     radarsDF.to_csv(nameFile + "_radars." + formatData, index=False)
-    oilStationsDF.to_csv(nameFile + "_oilStations." + formatData)
+    oilStationsDF.to_csv(nameFile + "_oilStations." + formatData, index=False)
     blackPointsDF.to_csv(nameFile + "_blackPoints." + formatData, index=False)
     parkingsDF.to_csv(nameFile + "_parkings." + formatData, index=False)
 
-print('✅ '+ formatData +' file/s generated')
+print('✅ ' + formatData + ' file/s generated')
